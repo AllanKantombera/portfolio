@@ -94,7 +94,7 @@ nav ul li a:hover::after {
 /* Hero Section */
 .hero {
     margin-top: 120px;
-    height: fit-content;
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -432,7 +432,44 @@ footer {
     color: var(--light-blue);
     opacity: 0.7;
 }
-
+@media (max-width: 992px) {
+    .hero {
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+    }
+    .hero-content {
+      max-width: 100%;
+      margin-bottom: 40px;
+    }
+    .hero-image {
+      width: 250px;
+      height: 250px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .hero h1 {
+      font-size: 2.5rem;
+    }
+    .hero h2 {
+      font-size: 1.2rem;
+    }
+    .hero-image {
+      width: 200px;
+      height: 200px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .hero {
+      padding: 0 5%;
+    }
+    .hero-image {
+      width: 150px;
+      height: 150px;
+    }
+  }
 /* Responsive Design */
 @media (max-width: 1200px) {
     .hero-image {
