@@ -101,6 +101,7 @@ nav ul li a:hover::after {
     padding: 0 10%;
     position: relative;
     overflow: hidden;
+    text-align: left;
   }
   
   .hero::before {
