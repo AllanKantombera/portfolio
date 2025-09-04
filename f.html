@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FleetShield - Advanced Smart Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        yellow: {
+                            450: '#FFD700',
+                            550: '#FFC000',
+                            650: '#E6B800'
+                        },
+                        black: {
+                            450: '#1A1A1A',
+                            550: '#0D0D0D'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 50;
+                height: 100vh;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .overlay {
+                display: none;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 40;
+            }
+            .overlay.active {
+                display: block;
+            }
+        }
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+    </style>
+</head>
+<body class="bg-black-450 text-gray-100 min-h-screen flex">
+    <!-- Mobile menu overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-64 bg-black-550 flex flex-col h-screen overflow-y-auto fixed top-0 left-0 z-50 transition-transform duration-300" id="sidebar">        <!-- Logo -->
+        <div class="p-5 border-b border-yellow-550">
+            <h1 class="text-2xl font-bold text-yellow-450 flex items-center">
+                <i class="fas fa-shield-alt mr-2"></i>FleetShield
+            </h1>
+            <p class="text-xs text-yellow-550 mt-1">Advanced Smart Tracker</p>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 p-4 overflow-y-auto">
+            <ul>
+                <li class="mb-2">
+                    <a href="#" class="flex items-center p-3 text-yellow-450 bg-yellow-450 bg-opacity-10 rounded-lg">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="vehicle.html" class="flex items-center p-3 text-gray-300 hover:bg-yellow-450 hover:bg-opacity-10 hover:text-yellow-450 rounded-lg">
+                        <i class="fas fa-truck mr-3"></i>
+                        <span>Vehicles</span>
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-yellow-450 hover:bg-opacity-10 hover:text-yellow-450 rounded-lg">
+                        <i class="fas fa-gas-pump mr-3"></i>
+                        <span>Fuel Monitoring</span>
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-yellow-450 hover:bg-opacity-10 hover:text-yellow-450 rounded-lg">
+                        <i class="fas fa-door-open mr-3"></i>
+                        <span>Cargo Safety</span>
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-yellow-450 hover:bg-opacity-10 hover:text-yellow-450 rounded-lg">
+                        <i class="fas fa-map-marked-alt mr-3"></i>
+                        <span>GPS Tracking</span>
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="#" class="flex items-center p-3 text-gray-300 hover:bg-yellow-450 hover:bg-opacity-10 hover:text-yellow-450 rounded-lg">
+                        <i class="fas fa-cog mr-3"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- User profile -->
+        <div class="p-4 border-t border-gray-700">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-yellow-450 flex items-center justify-center text-black-450 font-bold">
+                    JS
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">John Smith</p>
+                    <p class="text-xs text-gray-400">Admin</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+
+ <!-- Main content -->
+ <main class="flex-1 overflow-x-hidden overflow-y-auto md:ml-64">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-4">
+                <!-- Hamburger button (mobile) -->
+                <button id="openSidebar" class="md:hidden text-yellow-450">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+               
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <input type="text" placeholder="Search vehicles..."
+                        class="bg-black-550 text-gray-100 rounded-full py-2 px-4 pl-10 w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-yellow-450">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+               
+            </div>
+        </div>
+
+            <!-- Fuel Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-black-550 rounded-lg p-5 shadow-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400">Total Fuel Used</p>
+                            <h3 class="text-2xl font-bold text-yellow-450">4,582 L</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-yellow-450 bg-opacity-20 flex items-center justify-center">
+                            <i class="fas fa-gas-pump text-yellow-450"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-black-550 rounded-lg p-5 shadow-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400">Average Efficiency</p>
+                            <h3 class="text-2xl font-bold text-green-400">8.2 mpg</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center">
+                            <i class="fas fa-tachometer-alt text-green-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-black-550 rounded-lg p-5 shadow-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400">Fuel Cost</p>
+                            <h3 class="text-2xl font-bold text-red-400">$18,328</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-red-500 bg-opacity-20 flex items-center justify-center">
+                            <i class="fas fa-dollar-sign text-red-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-black-550 rounded-lg p-5 shadow-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400">Potential Savings</p>
+                            <h3 class="text-2xl font-bold text-blue-400">$2,450</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-blue-500 bg-opacity-20 flex items-center justify-center">
+                            <i class="fas fa-piggy-bank text-blue-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel Consumption Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Fuel Efficiency Over Time -->
+                <div class="bg-black-550 rounded-lg p-5 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-yellow-450">Fuel Efficiency Trend</h3>
+                        <div class="flex space-x-2">
+                            <button class="text-xs bg-yellow-450 bg-opacity-20 text-yellow-450 px-2 py-1 rounded">Week</button>
+                            <button class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">Month</button>
+                            <button class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">Year</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="efficiencyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Fuel Consumption by Vehicle -->
+                <div class="bg-black-550 rounded-lg p-5 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-yellow-450">Consumption by Vehicle</h3>
+                        <div class="flex space-x-2">
+                            <button class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">Volume</button>
+                            <button class="text-xs bg-yellow-450 bg-opacity-20 text-yellow-450 px-2 py-1 rounded">Efficiency</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="consumptionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Actions -->
+            <div class="flex flex-wrap justify-between items-center mb-6">
+                <div class="flex space-x-2 mb-4 md:mb-0">
+                    <select class="bg-black-550 text-gray-100 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-450">
+                        <option>All Vehicles</option>
+                        <option>TRK-042</option>
+                        <option>TRK-017</option>
+                        <option>TRK-033</option>
+                        <option>TRK-028</option>
+                    </select>
+                    <select class="bg-black-550 text-gray-100 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-450">
+                        <option>Last 7 Days</option>
+                        <option>Last 30 Days</option>
+                        <option>Last 90 Days</option>
+                        <option>Custom Range</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="bg-black-550 text-gray-100 py-2 px-3 rounded-lg flex items-center">
+                        <i class="fas fa-filter mr-2"></i> Filter
+                    </button>
+                    <button class="bg-black-550 text-gray-100 py-2 px-3 rounded-lg flex items-center">
+                        <i class="fas fa-chart-line mr-2"></i> Analyze
+                    </button>
+                    <button class="bg-black-550 text-gray-100 py-2 px-3 rounded-lg flex items-center">
+                        <i class="fas fa-download mr-2"></i> Export Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fuel Transactions Table -->
+            <div class="bg-black-550 rounded-lg shadow-lg overflow-hidden mb-8">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-gray-400 text-sm border-b border-gray-700">
+                                <th class="py-3 px-4">Date & Time</th>
+                                <th class="py-3 px-4">Vehicle</th>
+                                <th class="py-3 px-4">Driver</th>
+                                <th class="py-3 px-4">Type</th>
+                                <th class="py-3 px-4">Volume (L)</th>
+                                <th class="py-3 px-4">Cost</th>
+                                <th class="py-3 px-4">Efficiency</th>
+                                <th class="py-3 px-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700">
+                            <tr>
+                                <td class="py-3 px-4">Oct 12, 2023 14:28</td>
+                                <td class="py-3 px-4 font-medium">TRK-042</td>
+                                <td class="py-3 px-4">M. Johnson</td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-blue-500 bg-opacity-20 text-blue-400 rounded-full text-xs">Refuel</span></td>
+                                <td class="py-3 px-4">120 L</td>
+                                <td class="py-3 px-4">$480.00</td>
+                                <td class="py-3 px-4">8.4 mpg</td>
+                                <td class="py-3 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-yellow-450 hover:text-yellow-550">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-blue-400 hover:text-blue-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Oct 11, 2023 09:15</td>
+                                <td class="py-3 px-4 font-medium">TRK-017</td>
+                                <td class="py-3 px-4">A. Rodriguez</td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-green-500 bg-opacity-20 text-green-400 rounded-full text-xs">Normal</span></td>
+                                <td class="py-3 px-4">86 L</td>
+                                <td class="py-3 px-4">$344.00</td>
+                                <td class="py-3 px-4">7.8 mpg</td>
+                                <td class="py-3 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-yellow-450 hover:text-yellow-550">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-blue-400 hover:text-blue-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Oct 10, 2023 16:45</td>
+                                <td class="py-3 px-4 font-medium">TRK-033</td>
+                                <td class="py-3 px-4">J. Williams</td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-red-500 bg-opacity-20 text-red-400 rounded-full text-xs">Theft Suspected</span></td>
+                                <td class="py-3 px-4">45 L</td>
+                                <td class="py-3 px-4">$180.00</td>
+                                <td class="py-3 px-4">6.2 mpg</td>
+                                <td class="py-3 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-yellow-450 hover:text-yellow-550">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-blue-400 hover:text-blue-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Oct 9, 2023 11:30</td>
+                                <td class="py-3 px-4 font-medium">TRK-028</td>
+                                <td class="py-3 px-4">T. Smith</td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-blue-500 bg-opacity-20 text-blue-400 rounded-full text-xs">Refuel</span></td>
+                                <td class="py-3 px-4">95 L</td>
+                                <td class="py-3 px-4">$380.00</td>
+                                <td class="py-3 px-4">8.6 mpg</td>
+                                <td class="py-3 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-yellow-450 hover:text-yellow-550">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-blue-400 hover:text-blue-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Oct 8, 2023 13:20</td>
+                                <td class="py-3 px-4 font-medium">TRK-011</td>
+                                <td class="py-3 px-4">K. Brown</td>
+                                <td class="py-3 px-4"><span class="px-2 py-1 bg-green-500 bg-opacity-20 text-green-400 rounded-full text-xs">Normal</span></td>
+                                <td class="py-3 px-4">78 L</td>
+                                <td class="py-3 px-4">$312.00</td>
+                                <td class="py-3 px-4">7.5 mpg</td>
+                                <td class="py-3 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-yellow-450 hover:text-yellow-550">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-blue-400 hover:text-blue-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination -->
+                <div class="px-4 py-3 border-t border-gray-700 flex items-center justify-between">
+                    <div class="text-sm text-gray-400">
+                        Showing 1 to 5 of 127 transactions
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="bg-black-450 text-gray-100 py-1 px-3 rounded-lg text-sm">
+                            Previous
+                        </button>
+                        <button class="bg-yellow-450 text-black-550 font-semibold py-1 px-3 rounded-lg text-sm">
+                            1
+                        </button>
+                        <button class="bg-black-450 text-gray-100 py-1 px-3 rounded-lg text-sm">
+                            2
+                        </button>
+                        <button class="bg-black-450 text-gray-100 py-1 px-3 rounded-lg text-sm">
+                            3
+                        </button>
+                        <button class="bg-black-450 text-gray-100 py-1 px-3 rounded-lg text-sm">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel Insights -->
+            <div class="bg-black-550 rounded-lg shadow-lg p-5 mb-8">
+                <h3 class="text-lg font-semibold text-yellow-450 mb-4">Fuel Insights & Recommendations</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-black-450 p-4 rounded-lg">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-red-500 bg-opacity-20 flex items-center justify-center mr-3">
+                                <i class="fas fa-exclamation-triangle text-red-400"></i>
+                            </div>
+                            <h4 class="font-medium">Fuel Theft Detection</h4>
+                        </div>
+                        <p class="text-sm text-gray-400">Suspicious fuel activity detected in 3 vehicles. Review transactions marked with "Theft Suspected".</p>
+                    </div>
+                    <div class="bg-black-450 p-4 rounded-lg">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-500 bg-opacity-20 flex items-center justify-center mr-3">
+                                <i class="fas fa-chart-line text-blue-400"></i>
+                            </div>
+                            <h4 class="font-medium">Efficiency Improvement</h4>
+                        </div>
+                        <p class="text-sm text-gray-400">Vehicles TRK-017 and TRK-011 are performing below fleet average. Schedule maintenance check.</p>
+                    </div>
+                    <div class="bg-black-450 p-4 rounded-lg">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center mr-3">
+                                <i class="fas fa-piggy-bank text-green-400"></i>
+                            </div>
+                            <h4 class="font-medium">Cost Saving Opportunity</h4>
+                        </div>
+                        <p class="text-sm text-gray-400">Optimizing routes could save approximately $450 monthly in fuel costs.</p>
+                    </div>
+                    <div class="bg-black-450 p-4 rounded-lg">
+                        <div class="flex items-center mb-3">
+                            <div class="w-10 h-10 rounded-full bg-yellow-450 bg-opacity-20 flex items-center justify-center mr-3">
+                                <i class="fas fa-gas-pump text-yellow-450"></i>
+                            </div>
+                            <h4 class="font-medium">Refueling Pattern</h4>
+                        </div>
+                        <p class="text-sm text-gray-400">Most refueling happens between 2-4 PM. Consider shifting to non-peak hours for better pricing.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+          document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("overlay");
+            const openBtn = document.getElementById("openSidebar");
+            const closeBtn = document.getElementById("closeSidebar");
+
+            openBtn.addEventListener("click", () => {
+                sidebar.classList.add("active");
+                overlay.classList.add("active");
+            });
+
+            closeBtn.addEventListener("click", () => {
+                sidebar.classList.remove("active");
+                overlay.classList.remove("active");
+            });
+
+            overlay.addEventListener("click", () => {
+                sidebar.classList.remove("active");
+                overlay.classList.remove("active");
+            });
+        });
+
+        // Simple script to demonstrate interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate live updates
+            setInterval(function() {
+                const efficiencyElements = document.querySelectorAll('tbody tr td:nth-child(7)');
+                efficiencyElements.forEach((cell, index) => {
+                    if(index === 1 && cell.textContent === '7.8 mpg') {
+                        cell.textContent = '7.9 mpg';
+                        cell.classList.remove('text-red-400');
+                        cell.classList.add('text-green-400');
+                    }
+                });
+            }, 30000);
+            
+            // Add click event to view buttons
+            const viewButtons = document.querySelectorAll('button.text-yellow-450');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    alert('Viewing fuel transaction details');
+                });
+            });
+            
+            // Draw simple charts
+            const drawCharts = function() {
+                const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
+                const consumptionCtx = document.getElementById('consumptionChart').getContext('2d');
+                
+                // Draw efficiency chart
+                efficiencyCtx.clearRect(0, 0, efficiencyCtx.canvas.width, efficiencyCtx.canvas.height);
+                
+                // Draw axes
+                efficiencyCtx.beginPath();
+                efficiencyCtx.strokeStyle = '#4A4A4A';
+                efficiencyCtx.lineWidth = 1;
+                efficiencyCtx.moveTo(40, 40);
+                efficiencyCtx.lineTo(40, 260);
+                efficiencyCtx.lineTo(560, 260);
+                efficiencyCtx.stroke();
+                
+                // Draw data
+                const efficiencyData = [7.8, 7.9, 8.1, 8.3, 8.2, 8.4, 8.2];
+                efficiencyCtx.beginPath();
+                efficiencyCtx.strokeStyle = '#FFD700';
+                efficiencyCtx.lineWidth = 2;
+                for (let i = 0; i < efficiencyData.length; i++) {
+                    const x = 40 + (i * (520 / (efficiencyData.length - 1)));
+                    const y = 260 - (efficiencyData[i] - 7.5) * 40;
+                    
+                    if (i === 0) {
+                        efficiencyCtx.moveTo(x, y);
+                    } else {
+                        efficiencyCtx.lineTo(x, y);
+                    }
+                    
+                    // Draw points
+                    efficiencyCtx.beginPath();
+                    efficiencyCtx.fillStyle = '#FFD700';
+                    efficiencyCtx.arc(x, y, 4, 0, Math.PI * 2);
+                    efficiencyCtx.fill();
+                }
+                efficiencyCtx.stroke();
+                
+                // Draw consumption chart
+                consumptionCtx.clearRect(0, 0, consumptionCtx.canvas.width, consumptionCtx.canvas.height);
+                
+                // Draw axes
+                consumptionCtx.beginPath();
+                consumptionCtx.strokeStyle = '#4A4A4A';
+                consumptionCtx.lineWidth = 1;
+                consumptionCtx.moveTo(40, 40);
+                consumptionCtx.lineTo(40, 260);
+                consumptionCtx.lineTo(560, 260);
+                consumptionCtx.stroke();
+                
+                // Draw bars
+                const consumptionData = [120, 86, 95, 78, 105];
+                const vehicleLabels = ['TRK-042', 'TRK-017', 'TRK-033', 'TRK-028', 'TRK-011'];
+                const barWidth = 80;
+                const spacing = 20;
+                
+                for (let i = 0; i < consumptionData.length; i++) {
+                    const x = 60 + (i * (barWidth + spacing));
+                    const barHeight = (consumptionData[i] / 150) * 200;
+                    
+                    consumptionCtx.fillStyle = '#FFD700';
+                    consumptionCtx.fillRect(x, 260 - barHeight, barWidth, barHeight);
+                    
+                    // Label
+                    consumptionCtx.fillStyle = '#A1A1A1';
+                    consumptionCtx.font = '12px sans-serif';
+                    consumptionCtx.textAlign = 'center';
+                    consumptionCtx.fillText(vehicleLabels[i], x + barWidth/2, 275);
+                }
+            };
+            
+            drawCharts();
+        });
+    </script>
+</body>
+</html>
